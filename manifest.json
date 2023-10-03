@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "FitEdit Training Data Manager",
+  "description": "Companion browser extension for FitEdit",
+  "author": "EnduraByte LLC",
+  "version": "0.1",
+  "permissions": [
+    "cookies",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.garmin.com/*"
+  ],
+  "background": {
+    // For Chrome
+    "service_worker": "background.js",
+    // For FireFox
+    //"scripts": ["background.js"],
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FitEdit"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "support@fitedit.io"
+    }
+  }
+}

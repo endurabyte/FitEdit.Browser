@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FitEdit</title>
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <script src="supabase.js"></script>
+  <script src="popup.js"></script>
+</head>
+<body>
+
+  <header>
+    <div class="header-content">
+      <span class="brand">Fit<span class="brand-suffix">Edit</span></span>
+    </div>
+  </header>
+
+  <main>
+
+    <h2>Sign-In Status</h2>
+    <div>
+      <input type="text" id="email" placeholder="Email">
+      <input type="text" id="otp" placeholder="OTP" style="display:none;">
+      <button class="cta-button" id="signin">Sign In</button>
+      <button class="cta-button" id="verify" style="display:none;">Verify</button>
+      <button class="cta-button cancel-button" id="cancel" style="display:none;">Cancel</button>
+      <button class="cta-button" id="signout" style="display:none;">Sign Out</button>
+    </div>
+
+    <div id="result"></div>
+
+    <h2>Garmin Login</h2>
+
+    <table>
+      <tbody id="cookieTableBody">
+        <!-- Table data will go here -->
+      </tbody>
+    </table>
+  </main>
+
+
+  <footer>
+    <div class="footer-links">
+      <a href="https://www.fitedit.io/support.html" class="footer-link">Support</a>
+      <a href="https://www.fitedit.io/privacy.html" class="footer-link">Privacy Policy</a>
+      <a href="https://www.fitedit.io/terms.html" class="footer-link">Terms of Use</a>
+      <a href="https://www.fitedit.io/blog.html" class="footer-link">Blog</a>
+      <a href="https://www.fitedit.io/about.html" class="footer-link">About</a>
+    </div>
+  </footer>
+</body>
+</html>

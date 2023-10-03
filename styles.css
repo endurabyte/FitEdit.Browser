@@ -1,0 +1,179 @@
+@import url("fonts/FiraCode/fira_code.css");
+
+:root {
+  --highlight: #7981fe;
+  --error: #ff2f91;
+  --green1: #00fa91;
+  --green2: #00e8a6;
+  --gray1: #161616;
+  --gray2: #262626;
+  --gray3: #363636;
+  --gray4: #464646;
+  --gray15: #e6e6e6;
+}
+
+/* Global styles */
+* {
+	box-sizing: border-box;
+	font-family: Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+}
+
+/* Global styles */
+* {
+	box-sizing: border-box;
+	font-family: Arial, sans-serif;
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: var(--gray1);
+	margin: 0;
+	height: 100%;
+	width: 100%;
+	color: var(--gray15);
+	font-size: calc(1rem + 0.5vw);
+}
+
+header {
+	background-color: var(--gray1);
+	color: var(--gray15);
+	padding: 1rem;
+}
+
+input, select, textarea {
+	background-color: var(--gray2);
+  color: var(--gray15);
+	border-radius: 1rem;
+	border: none;
+	margin-top: 0.5rem;
+	padding: .5rem .5rem;
+}
+
+textarea:focus, input:focus {
+	background-color: var(--gray4);
+  color: var(--gray15);
+}
+
+main {
+	margin: 0 auto;
+	padding: 1rem;
+}
+
+ /* unvisited link */
+a:link {
+  color: var(--highlight);
+}
+
+/* visited link */
+a:visited {
+  color: var(--highlight);
+}
+
+h1 {
+	font-size: calc(1rem + 0.5vw);
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+	text-align: center;
+  color: var(--highlight);
+}
+
+h2 {
+	font-size: calc(.75rem + 0.5vw);
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+  color: var(--highlight);
+}
+
+h3 {
+	margin-top: 0.5rem;
+	margin-bottom: 0.5rem;
+  color: var(--highlight);
+}
+
+th, td {
+  padding: 10px 10px;
+}
+
+table {
+  text-align: left;
+}
+
+footer {
+	text-align: center;
+}
+
+.brand {
+	font-family: "Fira Code";
+	font-style: italic;
+	color: var(--gray15)
+}
+
+.brand-suffix {
+  color: var(--highlight);
+	font-family: "Fira Code";
+	font-style: italic;
+}
+
+.brand a:link {
+  color: var(--gray15);
+}
+
+/* visited link */
+.brand a:visited {
+  color: var(--gray15);
+}
+
+.header-content {
+	margin-top: 2rem;
+	text-align: center;
+	font-size: calc(2rem + 0.5vw);
+}
+
+.footer-links {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+	margin-top: 50px;
+	margin-left: max(50px, 25%);
+	margin-right: max(50px, 25%);
+	margin-bottom: 50px;
+	font-size: calc(0.75rem + 0.5vw);
+}
+
+.footer-link {
+  margin-top: 5px;
+  margin-left: 5px;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.success {
+  color: var(--green1)
+}
+
+.error {
+  color: var(--error)
+}
+
+.cta-button {
+	display: inline-block;
+	width: 10rem;
+	background-color: var(--green1);
+	color: var(--gray2);
+	padding: .5rem .5rem;
+	border-radius: 1rem;
+	border: none;
+	margin-top: 0.5rem;
+	text-decoration: none;
+}
+
+.cancel-button {
+	background-color: var(--gray4);
+}
+
+.cta-button:hover {
+	background-color: var(--green2);
+}
