@@ -7,6 +7,9 @@ let cancelButton = null;
 let verifyButton = null;
 let signoutButton = null;
 let resultDiv = null;
+let statusNeedsLogin = null;
+let statusNeedsGarminLogin = null;
+let statusOk = null;
 
 const showSignIn = () => {
   verifyButton.style.display = 'none';
@@ -16,6 +19,7 @@ const showSignIn = () => {
   otpInput.style.display = 'none';
   emailInput.style.display = 'inline-block';
   resultDiv.innerHTML = '';
+  statusNeedsLogin.style.display = 'inline-block';
 };
 
 function showOtp() {
@@ -26,6 +30,7 @@ function showOtp() {
   otpInput.style.display = 'inline-block';
   emailInput.style.display = 'none';
   resultDiv.innerHTML = '';
+  statusNeedsLogin.style.display = 'none';
 }
 
 function showSignOut() {
@@ -36,9 +41,12 @@ function showSignOut() {
   otpInput.style.display = 'none';
   emailInput.style.display = 'none';
   resultDiv.innerHTML = '';
+  statusNeedsLogin.style.display = 'none';
 }
 
 const populateTable = cookies => {
+  statusNeedsGarminLogin.style.display = 'none';
+
   const tableBody = document.getElementById("cookieTableBody");
   tableBody.innerHTML = "";
 
@@ -61,6 +69,10 @@ async function getLocalStorage(key) {
 }
 
 async function init() {
+
+  let id = chrome.runtime.id;
+  chrome.runtime.connect(id); // Start up background page
+
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'SET_COOKIES') {
       populateTable(message.payload);
@@ -78,8 +90,6 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await init();
-
   emailInput = document.getElementById('email');
   otpInput = document.getElementById('otp');
   signinButton = document.getElementById('signin');
@@ -87,6 +97,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   verifyButton = document.getElementById('verify');
   signoutButton = document.getElementById('signout');
   resultDiv = document.getElementById('result');
+  statusNeedsLogin = document.getElementById('status-needs-login');
+  statusNeedsGarminLogin = document.getElementById('status-needs-garmin-login');
+  statusOk = document.getElementById('status-ok');
+
+  await init();
 
   let isOtpSent = await getLocalStorage("isOtpSent");
   if (isOtpSent) {
@@ -160,23 +175,6 @@ async function checkSignedIn() {
 
   if (isSignedIn) {
     showSignOut();
-
-    client
-      .channel('realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'GarminUser' }, payload => {
-        console.log('Got GarminUser ', payload)
-      })
-      .subscribe()
-
-    client
-      .channel('realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'GarminActivity' }, payload => {
-        console.log('Got Garmin Activity ', payload)
-
-        resultDiv.innerHTML = payload.new.Name + "<br>" + payload.new.Description;
-      })
-      .subscribe()
-
   } else {
     showSignIn();
   }
