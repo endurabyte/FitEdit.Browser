@@ -9,6 +9,34 @@ const targetCookieNames = ["SESSIONID", "GARMIN-SSO-CUST-GUID"];
 const url = "https://connect.garmin.com"
 const intervalInMinutes = 0.25;
 
+function requestLogin() {
+
+  if (requestedLogin) { return; }
+  requestLogin = true;
+
+  chrome.notifications.create('FITEDIT_NEEDS_LOGIN', {
+    type: 'basic',
+    iconUrl: 'icons/icon128.png',
+    title: 'FitEdit: Please log in to FitEdit',
+    message: 'Please open the extension and log in to FitEdit.',
+    priority: 2
+  })
+}
+
+function requestGarminLogin() {
+
+  if (requestedGarminLogin) { return; }
+  requestedGarminLogin = true;
+
+  chrome.notifications.create('FITEDIT_NEEDS_GARMIN_LOGIN', {
+    type: 'basic',
+    iconUrl: 'icons/icon128.png',
+    title: 'FitEdit: Please log in to Garmin Connect',
+    message: 'Please visit https://connect.garmin.com/ and log in.',
+    priority: 2
+  })
+}
+
 // Fetch cookies of a given URL
 const getCookies = async url => {
   let allCookies = await chrome.cookies.getAll({ url });
@@ -36,7 +64,7 @@ const getCookies = async url => {
   garminUser.Cookies = cookies;
 
   await client
-    .from("")
+    .from("GarminUser")
     .update({ Cookies: cookies })
     .eq("Id", garminUser.Id);
 };
@@ -105,34 +133,6 @@ async function login() {
   let loggedIn = user != null && user.aud === "authenticated";
 
   return loggedIn;
-}
-
-function requestGarminLogin() {
-
-  if (requestedGarminLogin) { return; }
-  requestedGarminLogin = true;
-
-  chrome.notifications.create('FITEDIT_NEEDS_GARMIN_LOGIN', {
-    type: 'basic',
-    iconUrl: 'icons/icon128.png',
-    title: 'FitEdit: Please log in to Garmin Connect',
-    message: 'Please visit https://connect.garmin.com/ and log in.',
-    priority: 2
-  })
-}
-
-function requestLogin() {
-
-  if (requestedLogin) { return; }
-  requestLogin = true;
-
-  chrome.notifications.create('FITEDIT_NEEDS_LOGIN', {
-    type: 'basic',
-    iconUrl: 'icons/icon128.png',
-    title: 'FitEdit: Please log in to FitEdit',
-    message: 'Please open the extension and log in to FitEdit.',
-    priority: 2
-  })
 }
 
 async function install() {
