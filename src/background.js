@@ -4,10 +4,43 @@ let client = null;
 let garminUser = null;
 let requestedLogin = false;
 let requestedGarminLogin = false;
+let openedGarminTab = false;
 
 const targetCookieNames = ["SESSIONID", "GARMIN-SSO-CUST-GUID"];
 const url = "https://connect.garmin.com"
 const intervalInMinutes = 0.25;
+
+async function getLocalStorage(key) {
+  return await new Promise(function(resolve, reject) {
+    chrome.storage.local.get(key, res => {
+      resolve(res[key]);
+    })
+  });
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Wait for a tab to finish loading, including redirects.
+function waitForTabToLoad(tabId, maxRedirects = 10) {
+  let redirectCount = 0;
+  return new Promise((resolve, reject) => {
+    chrome.tabs.onUpdated.addListener(function listener(tabId_, info, tab) {
+      if (tabId_ === tabId && info.status === 'loading') {
+        if (++redirectCount > maxRedirects) {
+          chrome.tabs.onUpdated.removeListener(listener);
+          reject(new Error('Too many redirects'));
+        }
+      }
+
+      if (tabId_ === tabId && info.status === 'complete') {
+        chrome.tabs.onUpdated.removeListener(listener);
+        resolve();
+      }
+    });
+  });
+}
 
 function requestLogin() {
 
@@ -23,7 +56,40 @@ function requestLogin() {
   })
 }
 
+async function loginToGarmin() {
+  console.log("loginToGarmin");
+
+  let garminCreds = await getLocalStorage("garmin-creds");
+
+  if (garminCreds === null || garminCreds === undefined) {
+    console.error("No garmin credentials. Asking user to log in");
+    requestGarminLogin();
+    return;
+  }
+
+  if (openedGarminTab) { return; }
+  openedGarminTab = true;
+
+  chrome.tabs.create({ url: 'https://connect.garmin.com/signin' }, async (newTab) => {
+    // Wait for tab to finish loading
+    console.log("waiting for tab to load...");
+    await waitForTabToLoad(newTab.id);
+    await sleep(1 * 1000);
+
+    console.log("executing script");
+    // Fill form and close tab
+    await chrome.scripting.executeScript({
+      target: { tabId: newTab.id, },
+      files: ["garminFill.js",],
+    }, () => {
+      // Close the tab
+      //chrome.tabs.remove(newTab.id);
+    });
+  });
+}
+
 function requestGarminLogin() {
+  console.log("requestGarminLogin");
 
   if (requestedGarminLogin) { return; }
   requestedGarminLogin = true;
@@ -32,7 +98,7 @@ function requestGarminLogin() {
     type: 'basic',
     iconUrl: 'icons/icon128.png',
     title: 'FitEdit: Please log in to Garmin Connect',
-    message: 'Please visit https://connect.garmin.com/ and log in.',
+    message: 'Please open the extension and enter your Garmin Connect credentials, or visit https://connect.garmin.com/ and log in.',
     priority: 2
   })
 }
@@ -42,8 +108,9 @@ const getCookies = async url => {
   let allCookies = await chrome.cookies.getAll({ url });
   const cookies = allCookies.filter(cookie => targetCookieNames.includes(cookie.name));
 
-  if (cookies.length == 0) {
-    requestGarminLogin()
+  const hasSessionID = cookies.some(item => item.name === "SESSIONID");
+  if (hasSessionID === false) {
+    await loginToGarmin();
     return;
   }
 
@@ -70,11 +137,15 @@ const getCookies = async url => {
 };
 
 const loadUrl = async url => {
-  let response = await fetch(url);
-  if (response.ok) {
-    await getCookies(url);
-  } else {
-    console.log(`Background: Error: ${response.status}`);
+  try {
+    let response = await fetch(url);
+    if (response.ok) {
+      await getCookies(url);
+    } else {
+      console.log(`Background: Error: ${response.status}`);
+    }
+  } catch (err) {
+    console.log(err);
   }
 };
 
@@ -137,6 +208,12 @@ async function login() {
 
 async function install() {
 
+  chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+    if (message.action === 'garminLogin') {
+      await loginToGarmin();
+    }
+  });
+
   chrome.runtime.onInstalled.addListener(async ({ reason }) => {
     if (reason !== chrome.runtime.OnInstalledReason.INSTALL) {
       return;
@@ -147,11 +224,11 @@ async function install() {
     });
 
     // Schedule the first call to tick()
-    chrome.alarms.onAlarm.addListener(async details => {
+    chrome.alarms.onAlarm.addListener(async _ => {
       await tick();
     });
 
-    console.log("Background: installed", details);
+    console.log("Background: installed");
   });
 }
 

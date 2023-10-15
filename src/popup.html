@@ -26,17 +26,24 @@
       <button class="cta-button" id="signout" style="display:none;">Sign Out</button>
     </div>
 
+    <h2>Garmin Sign-In</h2>
+    <div>
+      <input type="text" id="garmin-email" placeholder="Email">
+      <input type="password" id="garmin-pass" placeholder="Password">
+      <button class="cta-button" id="garmin-save-button">Save</button>
+    </div>
+
     <div id="result"></div>
 
     <h2>Status</h2>
 
-    <p id="status-needs-login">
-        - Please log in to FitEdit
-    </p>
+    <div id="status-needs-login">
+        <p>- Please log in to FitEdit</p>
+    </div>
 
-    <p id="status-needs-garmin-login">
-        - Please go to Garmin Connect and log in.
-    </p>
+    <div id="status-needs-garmin-login">
+        <p>- Please log into Garmin.</p>
+    </div>
 
     <p id="status-ok" style="display:none;">
         OK

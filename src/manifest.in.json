@@ -8,7 +8,9 @@
     "cookies",
     "storage",
     "alarms",
-    "notifications"
+    "notifications",
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "*://*.garmin.com/*"
