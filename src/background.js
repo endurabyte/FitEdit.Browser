@@ -4,11 +4,12 @@ let client = null;
 let garminUser = null;
 let requestedLogin = false;
 let requestedGarminLogin = false;
+let requestedGarminPermission = false;
 let openedGarminTab = false;
 
 const targetCookieNames = ["SESSIONID", "GARMIN-SSO-CUST-GUID"];
 const url = "https://connect.garmin.com"
-const intervalInMinutes = 0.25;
+let intervalInMinutes = 0.25; // Increases after first successful fetch of SESSIONID
 
 async function getLocalStorage(key) {
   return await new Promise(function(resolve, reject) {
@@ -18,34 +19,10 @@ async function getLocalStorage(key) {
   });
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Wait for a tab to finish loading, including redirects.
-function waitForTabToLoad(tabId, maxRedirects = 10) {
-  let redirectCount = 0;
-  return new Promise((resolve, reject) => {
-    chrome.tabs.onUpdated.addListener(function listener(tabId_, info, tab) {
-      if (tabId_ === tabId && info.status === 'loading') {
-        if (++redirectCount > maxRedirects) {
-          chrome.tabs.onUpdated.removeListener(listener);
-          reject(new Error('Too many redirects'));
-        }
-      }
-
-      if (tabId_ === tabId && info.status === 'complete') {
-        chrome.tabs.onUpdated.removeListener(listener);
-        resolve();
-      }
-    });
-  });
-}
-
 function requestLogin() {
 
   if (requestedLogin) { return; }
-  requestLogin = true;
+  requestedLogin = true;
 
   chrome.notifications.create('FITEDIT_NEEDS_LOGIN', {
     type: 'basic',
@@ -53,40 +30,31 @@ function requestLogin() {
     title: 'FitEdit: Please log in to FitEdit',
     message: 'Please open the extension and log in to FitEdit.',
     priority: 2
-  })
+  });
 }
 
 async function loginToGarmin() {
   console.log("loginToGarmin");
 
-  let garminCreds = await getLocalStorage("garmin-creds");
-
-  if (garminCreds === null || garminCreds === undefined) {
-    console.error("No garmin credentials. Asking user to log in");
-    requestGarminLogin();
-    return;
-  }
+  requestGarminLogin();
 
   if (openedGarminTab) { return; }
   openedGarminTab = true;
 
-  chrome.tabs.create({ url: 'https://connect.garmin.com/signin' }, async (newTab) => {
-    // Wait for tab to finish loading
-    console.log("waiting for tab to load...");
-    await waitForTabToLoad(newTab.id);
-    await sleep(1 * 1000);
-
-    console.log("executing script");
-    // Fill form and close tab
-    await chrome.scripting.executeScript({
-      target: { tabId: newTab.id, },
-      files: ["garminFill.js",],
-    }, () => {
-      // Close the tab
-      //chrome.tabs.remove(newTab.id);
-    });
-  });
+  chrome.tabs.create({ url: 'https://connect.garmin.com' });
 }
+
+function haveCookiesChanged(oldCookies, newCookies) {
+  if (oldCookies.length !== newCookies.length) {
+    return true; // Different number of cookies.
+  }
+
+  // Create a map of cookie names to values for quick comparison.
+  const oldCookieMap = new Map(oldCookies.map(cookie => [cookie.name, cookie.value]));
+
+  // Check if any cookie has changed its value.
+  return newCookies.some(cookie => oldCookieMap.get(cookie.name) !== cookie.value);
+};
 
 function requestGarminLogin() {
   console.log("requestGarminLogin");
@@ -98,7 +66,23 @@ function requestGarminLogin() {
     type: 'basic',
     iconUrl: 'icons/icon128.png',
     title: 'FitEdit: Please log in to Garmin Connect',
-    message: 'Please open the extension and enter your Garmin Connect credentials, or visit https://connect.garmin.com/ and log in.',
+    message: 'Please visit https://connect.garmin.com/ and log in.',
+    priority: 2
+  })
+}
+
+function requestGarminPermission() {
+  console.log("requestGarminPermission");
+
+  if (requestedGarminPermission) { return; }
+  requestedGarminPermission = true;
+
+  chrome.tabs.create({ url: 'https://connect.garmin.com' });
+  chrome.notifications.create('FITEDIT_NEEDS_GARMIN_PERMISSION', {
+    type: 'basic',
+    iconUrl: 'icons/icon128.png',
+    title: 'FitEdit: Please grant permission',
+    message: 'Please visit https://connect.garmin.com/ and click on the extension icon to grant permission.',
     priority: 2
   })
 }
@@ -128,12 +112,18 @@ const getCookies = async url => {
     return;
   }
 
+  if (!haveCookiesChanged(garminUser.Cookies, cookies)) {
+    return;
+  }
+
   garminUser.Cookies = cookies;
 
   await client
     .from("GarminUser")
     .update({ Cookies: cookies })
     .eq("Id", garminUser.Id);
+
+  intervalInMinutes = 2;
 };
 
 const loadUrl = async url => {
@@ -146,6 +136,10 @@ const loadUrl = async url => {
     }
   } catch (err) {
     console.log(err);
+
+    if (err instanceof TypeError) {
+      requestGarminPermission();
+    }
   }
 };
 
@@ -158,26 +152,16 @@ async function tick() {
   const isFirstTick = client === null;
 
   if (isFirstTick) {
-    chrome.notifications.onClicked.addListener(name => {
-      if (name === "FITEDIT_NEEDS_LOGIN") {
-        // Not allowed despite https://bugzilla.mozilla.org/show_bug.cgi?id=1799345
-        // Results in "openPopup requires a user gesture" in FF 118
-        // and "could not find an active browser window" in Chromium 119
-        //chrome.action.openPopup();
-      }
-    });
-
     chrome.alarms.onAlarm.addListener(async _ => {
       await tick();
     });
+  }
 
-    let loggedIn = await login();
+  let loggedIn = await login();
 
-    if (!loggedIn) {
-      requestLogin();
-      return;
-    }
-
+  if (!loggedIn) {
+    requestLogin();
+  } else if (garminUser === null) {
     const { data } = await client
       .from("GarminUser")
       .select()
@@ -191,7 +175,9 @@ async function tick() {
     delayInMinutes: intervalInMinutes
   });
 
-  loadUrl(url);
+  if (loggedIn) {
+    loadUrl(url);
+  }
 }
 
 async function login() {
@@ -199,6 +185,12 @@ async function login() {
   let response = await fetch("https://www.fitedit.io/support/config.v1.json");
   const { projectId, anonKey } = await response.json();
   client = supabase.createClient(`https://${projectId}.supabase.co`, anonKey);
+
+  let session = await getLocalStorage("session");
+  await client.auth.setSession({
+    access_token: session.access_token,
+    refresh_token: session.refresh_token
+  });
 
   const { data: { user } } = await client.auth.getUser();
   let loggedIn = user != null && user.aud === "authenticated";

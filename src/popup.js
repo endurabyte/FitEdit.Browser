@@ -7,9 +7,6 @@ let cancelButton = null;
 let verifyButton = null;
 let signoutButton = null;
 let resultDiv = null;
-let garminEmailInput = null;
-let garminPassInput = null;
-let garminSaveButton = null;
 let statusNeedsLogin = null;
 let statusNeedsGarminLogin = null;
 let statusOk = null;
@@ -82,12 +79,6 @@ async function init() {
     }
   });
 
-  const garminCreds = await getLocalStorage("garmin-creds");
-  if (garminCreds) {
-    garminEmailInput.value = garminCreds.email;
-    garminPassInput.value = garminCreds.pass;
-  }
-
   const cookies = await getLocalStorage("cookies");
   if (cookies) {
     populateTable(cookies);
@@ -106,9 +97,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   verifyButton = document.getElementById('verify');
   signoutButton = document.getElementById('signout');
   resultDiv = document.getElementById('result');
-  garminEmailInput = document.getElementById('garmin-email');
-  garminPassInput = document.getElementById('garmin-pass');
-  garminSaveButton = document.getElementById('garmin-save-button');
   statusNeedsLogin = document.getElementById('status-needs-login');
   statusNeedsGarminLogin = document.getElementById('status-needs-garmin-login');
   statusOk = document.getElementById('status-ok');
@@ -142,18 +130,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     showOtp();
     resultDiv.innerHTML = 'We sent you an email. Please enter the code in the email.';
   });
-
-  garminSaveButton.addEventListener('click', async () => {
-    const email = garminEmailInput.value;
-    const pass = garminPassInput.value;
-
-    chrome.storage.local.set({
-      "garmin-creds": {
-        "email": email,
-        "pass": pass
-      }
-    })
-  })
 
   verifyButton.addEventListener('click', async () => {
     const email = emailInput.value;
@@ -198,6 +174,9 @@ async function checkSignedIn() {
   let isSignedIn = user != null && user.aud === "authenticated";
 
   if (isSignedIn) {
+    let session = await client.auth.getSession();
+    chrome.storage.local.set({ "session": session.data.session });
+
     showSignOut();
   } else {
     showSignIn();
