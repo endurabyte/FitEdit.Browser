@@ -4,7 +4,7 @@
 
 ## FitEdit
 
-FitEdit is a training data manager that keeps a local database of all your workouts. Learn more https://www.fitedit.io/
+FitEdit is a training data manager that keeps a local database of all your workouts. Learn more at https://www.fitedit.io/
 
 ## extension
 
