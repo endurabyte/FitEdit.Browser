@@ -15,4 +15,5 @@ The FitEdit browser extension is optional and enables extra features in FitEdit.
 Available soon on the Chrome Web Store and FireFox Add-Ons.
 
 https://releases.fitedit.io/browser/extension/chrome.zip
+
 https://releases.fitedit.io/browser/extension/firefox.zip
