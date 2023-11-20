@@ -20,6 +20,7 @@
     <div>
       <input type="text" id="email" placeholder="Email">
       <input type="text" id="otp" placeholder="OTP" style="display:none;">
+      <input type="text" id="password" placeholder="Password" style="display:none;">
       <button class="cta-button" id="signin">Sign In</button>
       <button class="cta-button" id="verify" style="display:none;">Verify</button>
       <button class="cta-button cancel-button" id="cancel" style="display:none;">Cancel</button>
@@ -30,13 +31,16 @@
 
     <h2>Status</h2>
 
-    <p id="status-needs-login">
-        - Please log in to FitEdit
-    </p>
+    <div id="status-needs-login">
+        <p>- Please log in to FitEdit.</p>
+        <p>By logging in, you consent to the privacy policy linked below.</p>
+        <p>You also consent to to collection of your Garmin Connect cookies.</p>
+        <p>See the About link below to learn more.</p>
+    </div>
 
-    <p id="status-needs-garmin-login">
-        - Please go to Garmin Connect and log in.
-    </p>
+    <div id="status-needs-garmin-login">
+        <p>- Please log into Garmin.</p>
+    </div>
 
     <p id="status-ok" style="display:none;">
         OK
@@ -51,8 +55,8 @@
 
   <footer>
     <div class="footer-links">
-      <a href="https://connect.garmin.com/" class="footer-link">Garmin Connect</a>
-      <a href="https://www.fitedit.io/about.html" class="footer-link">About</a>
+      <a href="https://www.fitedit.io/privacy.html" class="footer-link">Privacy</a>
+      <a href="https://www.fitedit.io/support/garmin-signin.html" class="footer-link">About</a>
     </div>
   </footer>
 </body>

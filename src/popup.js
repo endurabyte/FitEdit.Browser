@@ -2,6 +2,7 @@ let client = null;
 
 let emailInput = null;
 let otpInput = null;
+let passInput = null;
 let signinButton = null;
 let cancelButton = null;
 let verifyButton = null;
@@ -17,6 +18,7 @@ const showSignIn = () => {
   signoutButton.style.display = 'none';
   cancelButton.style.display = 'none';
   otpInput.style.display = 'none';
+  passInput.style.display = 'none';
   emailInput.style.display = 'inline-block';
   resultDiv.innerHTML = '';
   statusNeedsLogin.style.display = 'inline-block';
@@ -33,15 +35,33 @@ function showOtp() {
   statusNeedsLogin.style.display = 'none';
 }
 
+function requestPassword() {
+  verifyButton.style.display = 'inline-block';
+  signinButton.style.display = 'none';
+  signoutButton.style.display = 'none';
+  cancelButton.style.display = 'inline-block';
+  otpInput.style.display = 'none';
+  passInput.style.display = 'inline-block';
+  emailInput.style.display = 'none';
+  resultDiv.innerHTML = '';
+  statusNeedsLogin.style.display = 'none';
+}
+
 function showSignOut() {
   verifyButton.style.display = 'none';
   signoutButton.style.display = 'inline-block';
   signinButton.style.display = 'none';
   cancelButton.style.display = 'none';
   otpInput.style.display = 'none';
+  passInput.style.display = 'none';
   emailInput.style.display = 'none';
   resultDiv.innerHTML = '';
   statusNeedsLogin.style.display = 'none';
+}
+
+function logsInWithPassword(email) {
+  const regex = new RegExp("tester-.+@fitedit.io");
+  return regex.test(email);
 }
 
 const populateTable = cookies => {
@@ -92,6 +112,7 @@ async function init() {
 document.addEventListener("DOMContentLoaded", async () => {
   emailInput = document.getElementById('email');
   otpInput = document.getElementById('otp');
+  passInput = document.getElementById('password');
   signinButton = document.getElementById('signin');
   cancelButton = document.getElementById('cancel');
   verifyButton = document.getElementById('verify');
@@ -117,6 +138,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const email = emailInput.value;
     chrome.storage.local.set({ "email": emailInput.value });
 
+    const usePassword = logsInWithPassword(email);
+
+    if (usePassword) {
+      requestPassword();
+      resultDiv.innerHTML = 'Please enter your password.';
+      return;
+    }
+
     const { data, error } = await client.auth.signInWithOtp({
       email,
     });
@@ -134,12 +163,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   verifyButton.addEventListener('click', async () => {
     const email = emailInput.value;
     const otp = otpInput.value;
+    const pass = passInput.value;
 
-    const { data, error } = await client.auth.verifyOtp({
-      email: email,
-      token: otp,
-      type: 'email'
-    });
+    let error = null;
+
+    if (logsInWithPassword(email)) {
+
+      const response = await client.auth.signInWithPassword({
+        email: email,
+        password: pass,
+      });
+      error = response.error;
+
+    } else {
+
+      const response = await client.auth.verifyOtp({
+        email: email,
+        token: otp,
+        type: 'email'
+      });
+      error = response.error;
+    }
 
     if (error) {
       resultDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
@@ -174,8 +218,12 @@ async function checkSignedIn() {
   let isSignedIn = user != null && user.aud === "authenticated";
 
   if (isSignedIn) {
+    let session = await client.auth.getSession();
+    chrome.storage.local.set({ "session": session.data.session });
+
     showSignOut();
   } else {
     showSignIn();
   }
 }
+
