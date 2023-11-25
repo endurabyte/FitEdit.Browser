@@ -45,7 +45,7 @@ async function loginToGarmin() {
 }
 
 function haveCookiesChanged(oldCookies, newCookies) {
-  if (oldCookies.length !== newCookies.length) {
+  if (oldCookies === null || oldCookies.length !== newCookies.length) {
     return true; // Different number of cookies.
   }
 
